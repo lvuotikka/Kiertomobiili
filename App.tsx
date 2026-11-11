@@ -58,26 +58,22 @@ function getCyclePhase(day: number, cycleLength: number) {
       name: 'Kuukautiset',
       color: '#702D3C',
     };
-  }
-
-  if (day <= cycleLength - 15) {
+  } else if (day <= cycleLength - 15) {
     return {
       name: 'Follikulaarivaihe',
       color: '#C5C5C0',
     };
-  }
-
-  if (day <= cycleLength - 12) {
+  } else if (day <= cycleLength - 12) {
     return {
       name: 'Arvioitu ovulaatio',
       color: '#C8BDA8',
     };
+  } else {
+    return {
+      name: 'Luteaalivaihe',
+      color: '#594131',
+    };
   }
-
-  return {
-    name: 'Luteaalivaihe',
-    color: '#594131',
-  };
 }
 
 // Kierron vaiheiden tiedot
