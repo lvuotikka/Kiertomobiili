@@ -10,27 +10,15 @@ import {
   PaperProvider,
   Text,
   TextInput,
-  MD3LightTheme,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import type { DateData } from 'react-native-calendars';
+
 import { cyclePhases } from './data/cyclePhases';
 import { getCyclePhase } from './utils/cycleUtils';
+import kiertoTheme from './theme/kiertoTheme';
 
-//teema
-const kiertoTheme = {
-  ...MD3LightTheme,
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: '#9AA58B',
-    secondary: '#702D3C',
-    background: '#292A27',
-    surface: '#F0E5CB',
-    onSurface: '#292A27',
-    outline: '#C9BFAE',
-  },
-};
 
 //kalenterin kuukaudet ja päivät
 LocaleConfig.locales.fi = {
