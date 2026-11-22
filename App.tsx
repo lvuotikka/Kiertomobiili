@@ -15,6 +15,8 @@ import {
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import type { DateData } from 'react-native-calendars';
+import { cyclePhases } from './data/cyclePhases';
+import { getCyclePhase } from './utils/cycleUtils';
 
 //teema
 const kiertoTheme = {
@@ -50,59 +52,6 @@ LocaleConfig.locales.fi = {
 };
 
 LocaleConfig.defaultLocale = 'fi';
-
-// Kierron vaiheet ja värit
-function getCyclePhase(day: number, cycleLength: number) {
-  if (day <= 5) {
-    return {
-      name: 'Kuukautiset',
-      color: '#702D3C',
-    };
-  } else if (day <= cycleLength - 15) {
-    return {
-      name: 'Follikulaarivaihe',
-      color: '#C5C5C0',
-    };
-  } else if (day <= cycleLength - 12) {
-    return {
-      name: 'Arvioitu ovulaatio',
-      color: '#C8BDA8',
-    };
-  } else {
-    return {
-      name: 'Luteaalivaihe',
-      color: '#594131',
-    };
-  }
-}
-
-// Kierron vaiheiden tiedot
-const cyclePhases = [
-  {
-    name: 'Kuukautiset',
-    color: '#702D3C',
-    days: 'Kiertopäivät 1-5',
-    description: '*',
-  },
-  {
-    name: 'Follikulaarivaihe',
-    color: '#C5C5C0',
-    days: 'Kuukautisten jälkeen',
-    description: '*',
-  },
-  {
-    name: 'Ovulaatio',
-    color: '#C8BDA8',
-    days: 'Keskellä kiertoa, arviolta',
-    description: '*',
-  },
-  {
-    name: 'Luteaalivaihe',
-    color: '#594131',
-    days: 'Ovulaation jälkeen',
-    description: '*',
-  },
-];
 
 // Sovelluksen pääkomponentti
 export default function App() {
@@ -200,6 +149,7 @@ export default function App() {
           )}
 
           <Calendar
+            firstDay={1}
             onDayPress={(day: DateData) => {
               setPeriodStartDate(day.dateString);
             }}
