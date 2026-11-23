@@ -5,11 +5,37 @@ export type Recipe = {
   strMealThumb: string;
 };
 
+// Reseptit, joita emme halua näyttää ehdotuksissa
+const unwantedWords = [
+  'cake',
+  'pudding',
+  'cookie',
+  'biscuit',
+  'brownie',
+  'ice cream',
+  'chocolate',
+  'fudge',
+  'candy',
+  'donut',
+  'doughnut',
+  'tart',
+  'sweet',
+];
+
+// Tarkistetaan, onko reseptin nimi sopiva
+function isSuitableRecipeName(name: string): boolean {
+  const lowerName = name.toLowerCase();
+
+  return !unwantedWords.some((word) => lowerName.includes(word));
+}
+
+// Välimuisti reseptien tarkemmille tiedoille
+const recipeCache = new Map<string, RecipeDetails | null>();
+
 // Haetaan reseptejä yhden raaka-aineen perusteella
 export async function getRecipesByIngredient(
   ingredient: string
 ): Promise<Recipe[]> {
-  // Muutetaan välilyönnit alaviivoiksi API-hakua varten
   const formattedIngredient = ingredient
     .toLowerCase()
     .replace(/ /g, '_');
@@ -24,7 +50,32 @@ export async function getRecipesByIngredient(
 
   const data = await response.json();
 
-  return data.meals ?? [];
+  const meals: Recipe[] = data.meals ?? [];
+
+  // Karsitaan ensin selvästi sopimattomat nimet
+  const nameFiltered = meals.filter((recipe) =>
+    isSuitableRecipeName(recipe.strMeal)
+  );
+
+  // Tarkistetaan enintään 10 ehdokkaan tarkemmat tiedot
+  const candidates = nameFiltered.slice(0, 10);
+
+  const detailedRecipes = await Promise.all(
+    candidates.map((recipe) => getRecipeDetails(recipe.idMeal))
+  );
+
+  // Poistetaan jälkiruoat ja muut sopimattomat kategoriat
+  const suitableRecipes = candidates.filter((recipe, index) => {
+    const details = detailedRecipes[index];
+
+    if (!details) {
+      return false;
+    }
+
+    return details.strCategory?.toLowerCase() !== 'dessert';
+  });
+
+  return suitableRecipes;
 }
 
 // Yksittäisen reseptin tarkemmat tiedot
@@ -34,6 +85,7 @@ export type RecipeDetails = {
   strMealThumb: string;
   strInstructions: string;
   strSource: string | null;
+  strCategory?: string | null;
   [key: string]: string | null | undefined;
 };
 
@@ -41,6 +93,11 @@ export type RecipeDetails = {
 export async function getRecipeDetails(
   id: string
 ): Promise<RecipeDetails | null> {
+  // Käytetään välimuistissa olevia tietoja, jos ne löytyvät
+  if (recipeCache.has(id)) {
+    return recipeCache.get(id) ?? null;
+  }
+
   const response = await fetch(
     `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
   );
@@ -51,5 +108,9 @@ export async function getRecipeDetails(
 
   const data = await response.json();
 
-  return data.meals?.[0] ?? null;
+  const recipe: RecipeDetails | null = data.meals?.[0] ?? null;
+
+  recipeCache.set(id, recipe);
+
+  return recipe;
 }

@@ -36,6 +36,11 @@ type CycleCalendarProps = {
   markedDates: Record<string, any>;
   onSelectDate: (date: string) => void;
   onSetPeriodStartDate: (date: string) => void;
+  currentCycleDay: number | null;
+  currentPhase: {
+    name: string;
+    color: string;
+  } | null;
 };
 
 export default function CycleCalendar({
@@ -47,6 +52,8 @@ export default function CycleCalendar({
   markedDates,
   onSelectDate,
   onSetPeriodStartDate,
+  currentCycleDay,
+  currentPhase,
 }: CycleCalendarProps) {
 
   // Säilytetään kierron värit ja lisätään valitun päivän reunus
@@ -76,9 +83,45 @@ export default function CycleCalendar({
   return (
     <>
       <View style={styles.welcomeCard}>
-        <Text style={styles.welcomeTitle}>*</Text>
-        <Text style={styles.bodyText}>*</Text>
+  {currentCycleDay !== null && currentPhase ? (
+    <>
+      <Text style={styles.welcomeEyebrow}>TÄNÄÄN KIERROSSASI</Text>
+
+      <Text style={styles.welcomeTitle}>
+        Kiertopäivä {currentCycleDay}
+      </Text>
+
+      <View
+        style={[
+          styles.phaseBadge,
+          { backgroundColor: currentPhase.color },
+        ]}
+      >
+        <Text style={styles.phaseBadgeText}>
+          {currentPhase.name}
+        </Text>
       </View>
+
+      <Text style={styles.bodyText}>
+        {currentPhase.name === 'Kuukautiset'
+          ? 'Kuukautisten aikana voit kiinnittää huomiota lepoon ja omaan jaksamiseesi.'
+          : currentPhase.name === 'Follikulaarivaihe'
+          ? 'Kierron alkuvaiheessa keho valmistautuu ovulaatioon.'
+          : currentPhase.name === 'Arvioitu ovulaatio'
+          ? 'Ovulaation ajankohta on arvio, ja se voi vaihdella kierrosta toiseen.'
+          : 'Ovulaation jälkeen keho valmistautuu seuraavaan kiertoon.'}
+      </Text>
+    </>
+  ) : (
+    <>
+      <Text style={styles.welcomeTitle}>Tervetuloa Kiertoon.</Text>
+      <Text style={styles.bodyText}>
+        Aseta kalenterista viimeisimpien kuukautistesi alkamispäivä,
+        niin näet tässä kiertosi tämänhetkisen vaiheen.
+      </Text>
+    </>
+  )}
+</View>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Kiertokalenteri</Text>
@@ -203,6 +246,25 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#51483F',
+  },
+  welcomeEyebrow: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 1.5,
+    color: '#81766A',
+  },
+
+  phaseBadge: {
+    alignSelf: 'flex-start',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+
+  phaseBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   bodyText: {
     fontSize: 14,

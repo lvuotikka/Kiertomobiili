@@ -23,6 +23,37 @@ export function getCyclePhase(day: number, cycleLength: number) {
     };
   }
 }
+// Lasketaan tämänhetkinen kiertopäivä
+export function getCycleDay(periodStartDate: string, cycleLength: number) {
+  if (!periodStartDate || cycleLength < 21 || cycleLength > 38) {
+    return null;
+  }
+
+  // Käytetään päivämäärissä UTC-aikaa aikavyöhykeongelmien välttämiseksi
+  const [year, month, day] = periodStartDate.split('-').map(Number);
+  const startDate = new Date(Date.UTC(year, month - 1, day));
+
+  const today = new Date();
+  const todayDate = new Date(
+    Date.UTC(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    )
+  );
+
+  const difference = Math.floor(
+    (todayDate.getTime() - startDate.getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+
+  // Aloituspäivä ei voi olla tulevaisuudessa
+  if (difference < 0) {
+    return null;
+  }
+
+  return (difference % cycleLength) + 1;
+}
 
 export function createMarkedDates(
   periodStartDate: string,

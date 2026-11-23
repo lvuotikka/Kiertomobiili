@@ -21,7 +21,11 @@ import {
 
 import { database } from './firebaseConfig';
 
-import { createMarkedDates } from './utils/cycleUtils';
+import {
+  createMarkedDates,
+  getCycleDay,
+  getCyclePhase,
+} from './utils/cycleUtils';
 import kiertoTheme from './theme/kiertoTheme';
 
 import CyclePhases from './components/CyclePhases';
@@ -31,11 +35,14 @@ import WellBeing, {
 } from './components/WellBeing';
 import BottomNavigation from './components/BottomNavigation';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Sovelluksen pääkomponentti
 export default function App() {
   const [periodStartDate, setPeriodStartDate] = useState('');
   const [cycleLength, setCycleLength] = useState('28');
   const [activeTab, setActiveTab] = useState('calendar');
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState('');
 
@@ -65,6 +72,51 @@ export default function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Haetaan tallennetut kierron tiedot sovelluksen käynnistyessä
+useEffect(() => {
+  async function loadCycleSettings() {
+    try {
+      const savedSettings = await AsyncStorage.getItem('cycleSettings');
+
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+
+        setPeriodStartDate(settings.periodStartDate ?? '');
+        setCycleLength(settings.cycleLength ?? '28');
+      }
+    } catch (error) {
+      console.error('Kierron tietojen hakeminen epäonnistui:', error);
+    } finally {
+      setSettingsLoaded(true);
+    }
+  }
+
+  loadCycleSettings();
+}, []);
+
+// Tallennetaan kierron tiedot aina niiden muuttuessa
+useEffect(() => {
+  if (!settingsLoaded) {
+    return;
+  }
+
+  async function saveCycleSettings() {
+    try {
+      await AsyncStorage.setItem(
+        'cycleSettings',
+        JSON.stringify({
+          periodStartDate,
+          cycleLength,
+        })
+      );
+    } catch (error) {
+      console.error('Kierron tietojen tallennus epäonnistui:', error);
+    }
+  }
+
+  saveCycleSettings();
+}, [periodStartDate, cycleLength, settingsLoaded]);
 
   // Tallennetaan hyvinvointimerkintä Firebaseen
   function saveWellbeingEntry(entry: WellbeingEntry) {
@@ -102,6 +154,15 @@ export default function App() {
   const markedDates = validCycleLength
     ? createMarkedDates(periodStartDate, Number(cycleLength))
     : {};
+  // Lasketaan tämänhetkinen kiertopäivä ja kierron vaihe
+  const currentCycleDay = validCycleLength
+    ? getCycleDay(periodStartDate, Number(cycleLength))
+    : null;
+
+  const currentPhase =
+    currentCycleDay !== null
+      ? getCyclePhase(currentCycleDay, Number(cycleLength))
+      : null;
 
   // Etusivun kalenterinäkymä
   function renderCalendar() {
@@ -115,6 +176,8 @@ export default function App() {
         markedDates={markedDates}
         onSelectDate={setSelectedDate}
         onSetPeriodStartDate={setPeriodStartDate}
+        currentCycleDay={currentCycleDay}
+        currentPhase={currentPhase}
       />
     );
   }

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 
+// Hyvinvointimerkinnän tietorakenne
 export type WellbeingEntry = {
   sleep: string;
   mood: number;
@@ -9,179 +10,197 @@ export type WellbeingEntry = {
   notes: string;
 };
 
-type WellBeingProps = {
+// Komponentille välitettävät tiedot
+type WellbeingProps = {
   selectedDate: string;
   savedEntry?: WellbeingEntry;
   onSave: (entry: WellbeingEntry) => void;
 };
 
-export default function Wellbeing({
+export default function WellBeing({
   selectedDate,
   savedEntry,
   onSave,
-}: WellBeingProps) {
-  const [sleep, setSleep] = useState(savedEntry?.sleep ?? '');
-  const [mood, setMood] = useState(savedEntry?.mood ?? 3);
-  const [symptoms, setSymptoms] = useState(savedEntry?.symptoms ?? '');
-  const [notes, setNotes] = useState(savedEntry?.notes ?? '');
+}: WellbeingProps) {
+  const [sleep, setSleep] = useState('');
+  const [mood, setMood] = useState(3);
+  const [symptoms, setSymptoms] = useState('');
+  const [notes, setNotes] = useState('');
 
-  function handleSave() {
+  // Haetaan valitun päivän aiemmat merkinnät
+  useEffect(() => {
+    setSleep(savedEntry?.sleep ?? '');
+    setMood(savedEntry?.mood ?? 3);
+    setSymptoms(savedEntry?.symptoms ?? '');
+    setNotes(savedEntry?.notes ?? '');
+  }, [savedEntry, selectedDate]);
+
+  // Tallennetaan merkintä
+  const handleSave = () => {
     onSave({
       sleep,
       mood,
       symptoms,
       notes,
     });
-  }
+  };
 
   return (
-    <>
+    <View style={styles.container}>
       <View style={styles.introCard}>
-        <Text style={styles.welcomeTitle}>Hyvinvointipäiväkirja</Text>
+        <Text style={styles.welcomeTitle}>
+          Hyvinvointipäiväkirja
+        </Text>
+
         <Text style={styles.bodyText}>
-          Seuraa omaa hyvinvointiasi ja huomaa, miten kierron eri
-          vaiheet voivat vaikuttaa oloosi.
+          Seuraa päivittäistä hyvinvointiasi ja huomaa,
+          miten kierron eri vaiheet vaikuttavat oloosi.
+        </Text>
+
+        <Text style={styles.dateText}>
+          {selectedDate}
         </Text>
       </View>
 
       <View style={styles.wellbeingCard}>
-        <Text style={styles.phaseTitle}>Päivän merkintä</Text>
+        <Text style={styles.phaseTitle}>Uni</Text>
 
         <Text style={styles.bodyText}>
-          Valittu päivä: {selectedDate || 'Ei valittua päivää'}
+          Kuinka monta tuntia nukuit viime yönä?
         </Text>
 
-        {!selectedDate ? (
-          <Text style={styles.bodyText}>
-            Valitse ensin päivä kalenterista, jotta voit tehdä merkinnän.
-          </Text>
-        ) : (
-          <>
-            <Text style={styles.inputLabel}>Unen määrä (tuntia)</Text>
-            <TextInput
-              mode="outlined"
-              value={sleep}
-              onChangeText={setSleep}
-              keyboardType="decimal-pad"
-              placeholder="Esim. 8"
-              outlineColor="#C9BFAE"
-              activeOutlineColor="#78816B"
-              textColor="#292A27"
-              style={styles.input}
-            />
-
-            <Text style={styles.inputLabel}>Mieliala</Text>
-            <View style={styles.moodContainer}>
-              {[1, 2, 3, 4, 5].map((value) => (
-                <Button
-                  key={value}
-                  mode={mood === value ? 'contained' : 'outlined'}
-                  onPress={() => setMood(value)}
-                  buttonColor={mood === value ? '#78816B' : undefined}
-                  textColor={mood === value ? '#FFFFFF' : '#51483F'}
-                  style={styles.moodButton}
-                  compact
-                >
-                  {String(value)}
-                </Button>
-              ))}
-            </View>
-
-            <Text style={styles.bodyText}>
-              1 = erittäin huono, 5 = erittäin hyvä
-            </Text>
-
-            <Text style={styles.inputLabel}>Oireet ja tuntemukset</Text>
-            <TextInput
-              mode="outlined"
-              value={symptoms}
-              onChangeText={setSymptoms}
-              placeholder="Esim. päänsärky, väsymys, vatsakipu..."
-              multiline
-              outlineColor="#C9BFAE"
-              activeOutlineColor="#78816B"
-              textColor="#292A27"
-              style={styles.input}
-            />
-
-            <Text style={styles.inputLabel}>Muistiinpanot</Text>
-            <TextInput
-              mode="outlined"
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Miltä päivä tuntui?"
-              multiline
-              numberOfLines={4}
-              outlineColor="#C9BFAE"
-              activeOutlineColor="#78816B"
-              textColor="#292A27"
-              style={styles.input}
-            />
-
-            <Button
-              mode="contained"
-              onPress={handleSave}
-              buttonColor="#78816B"
-              textColor="#FFFFFF"
-              style={styles.saveButton}
-            >
-              Tallenna merkintä
-            </Button>
-          </>
-        )}
+        <TextInput
+          mode="outlined"
+          label="Unen määrä (tuntia)"
+          value={sleep}
+          onChangeText={setSleep}
+          keyboardType="decimal-pad"
+          style={styles.input}
+        />
       </View>
-    </>
+
+      <View style={styles.wellbeingCard}>
+        <Text style={styles.phaseTitle}>Mieliala</Text>
+
+        <Text style={styles.bodyText}>
+          Millainen mielialasi on tänään?
+        </Text>
+
+        <View style={styles.moodContainer}>
+          {[1, 2, 3, 4, 5].map((value) => (
+            <Button
+              key={value}
+              mode={mood === value ? 'contained' : 'outlined'}
+              onPress={() => setMood(value)}
+              compact
+              style={styles.moodButton}
+            >
+              {value.toString()}
+            </Button>
+          ))}
+        </View>
+
+        <Text style={styles.bodyText}>
+          1 = Erittäin huono · 5 = Erittäin hyvä
+        </Text>
+      </View>
+
+      <View style={styles.wellbeingCard}>
+        <Text style={styles.phaseTitle}>Oireet ja tuntemukset</Text>
+
+        <TextInput
+          mode="outlined"
+          label="Kirjaa päivän oireet"
+          value={symptoms}
+          onChangeText={setSymptoms}
+          multiline
+          numberOfLines={3}
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.wellbeingCard}>
+        <Text style={styles.phaseTitle}>Muistiinpanot</Text>
+
+        <TextInput
+          mode="outlined"
+          label="Muita huomioita päivästäsi..."
+          value={notes}
+          onChangeText={setNotes}
+          multiline
+          numberOfLines={4}
+          style={styles.input}
+        />
+      </View>
+
+      <Button
+        mode="contained"
+        onPress={handleSave}
+        style={styles.saveButton}
+        contentStyle={styles.saveButtonContent}
+      >
+        Tallenna merkintä
+      </Button>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    gap: 14,
+    paddingBottom: 24,
+  },
   introCard: {
-    backgroundColor: '#F0E5CB',
+    backgroundColor: '#F5F0E8',
     padding: 20,
-    borderRadius: 20,
-    gap: 8,
+    borderRadius: 16,
   },
   welcomeTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#51483F',
+    color: '#702D3C',
+    marginBottom: 10,
   },
   bodyText: {
     fontSize: 14,
+    color: '#625B55',
     lineHeight: 21,
-    color: '#625E56',
+    marginBottom: 10,
+  },
+  dateText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#702D3C',
+    marginTop: 8,
+  },
+  wellbeingCard: {
+    backgroundColor: '#F5F0E8',
+    padding: 18,
+    borderRadius: 16,
   },
   phaseTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#51483F',
-  },
-  wellbeingCard: {
-    backgroundColor: '#F0E5CB',
-    padding: 20,
-    borderRadius: 18,
-    gap: 10,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#51483F',
-    marginTop: 4,
+    color: '#702D3C',
+    marginBottom: 12,
   },
   input: {
-    backgroundColor: '#F0E5CB',
+    backgroundColor: '#FFFFFF',
+    marginTop: 6,
   },
   moodContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 4,
+    marginVertical: 10,
   },
   moodButton: {
-    flex: 1,
-    borderColor: '#C9BFAE',
+    borderRadius: 10,
   },
   saveButton: {
-    marginTop: 12,
-    borderRadius: 10,
+    backgroundColor: '#702D3C',
+    borderRadius: 12,
+  },
+  saveButtonContent: {
+    paddingVertical: 7,
   },
 });
