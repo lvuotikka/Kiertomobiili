@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
+import { Text, TextInput, Button, Switch } from 'react-native-paper';
 
 // Hyvinvointimerkinnän tietorakenne
 export type WellbeingEntry = {
@@ -15,12 +15,20 @@ type WellbeingProps = {
   selectedDate: string;
   savedEntry?: WellbeingEntry;
   onSave: (entry: WellbeingEntry) => void;
+  wellbeingReminder: boolean;
+  periodReminder: boolean;
+  onWellbeingReminderChange: (enabled: boolean) => void;
+  onPeriodReminderChange: (enabled: boolean) => void;
 };
 
 export default function WellBeing({
   selectedDate,
   savedEntry,
   onSave,
+  wellbeingReminder,
+  periodReminder,
+  onWellbeingReminderChange,
+  onPeriodReminderChange,
 }: WellbeingProps) {
   const [sleep, setSleep] = useState('');
   const [mood, setMood] = useState(3);
@@ -48,6 +56,51 @@ export default function WellBeing({
   return (
     <View style={styles.container}>
       <View style={styles.introCard}>
+        <View style={styles.reminderCard}>
+          <Text style={styles.phaseTitle}>Muistutukset</Text>
+
+          <Text style={styles.bodyText}>
+            Valitse, mistä asioista haluat saada muistutuksen.
+          </Text>
+
+          <View style={styles.reminderRow}>
+            <View style={styles.reminderText}>
+              <Text style={styles.reminderTitle}>
+                Hyvinvointipäiväkirja
+              </Text>
+
+              <Text style={styles.reminderDescription}>
+              Päivittäinen muistutus klo 20
+              </Text>
+            </View>
+
+            <Switch
+              value={wellbeingReminder}
+              onValueChange={onWellbeingReminderChange}
+              color="#702D3C"
+            />
+          </View>
+
+          <View style={styles.reminderDivider} />
+
+          <View style={styles.reminderRow}>
+            <View style={styles.reminderText}>
+              <Text style={styles.reminderTitle}>
+                Kuukautisten lähestyminen
+              </Text>
+
+              <Text style={styles.reminderDescription}>
+                Muistutus päivää ennen arvioitua alkamista
+              </Text>
+            </View>
+
+            <Switch
+              value={periodReminder}
+              onValueChange={onPeriodReminderChange}
+              color="#702D3C"
+            />
+          </View>
+        </View>
         <Text style={styles.welcomeTitle}>
           Hyvinvointipäiväkirja
         </Text>
@@ -203,4 +256,39 @@ const styles = StyleSheet.create({
   saveButtonContent: {
     paddingVertical: 7,
   },
+  reminderCard: {
+  backgroundColor: '#F5F0E8',
+  padding: 18,
+  borderRadius: 16,
+  gap: 12,
+},
+
+reminderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+},
+
+reminderText: {
+  flex: 1,
+  gap: 4,
+},
+
+reminderTitle: {
+  fontSize: 15,
+  fontWeight: 'bold',
+  color: '#51483F',
+},
+
+reminderDescription: {
+  fontSize: 12,
+  lineHeight: 18,
+  color: '#625B55',
+},
+
+reminderDivider: {
+  height: 1,
+  backgroundColor: '#D8CCBA',
+},
 });

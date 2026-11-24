@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   View,
@@ -26,16 +27,27 @@ import {
   getCycleDay,
   getCyclePhase,
 } from './utils/cycleUtils';
+
 import kiertoTheme from './theme/kiertoTheme';
 
 import CyclePhases from './components/CyclePhases';
 import CycleCalendar from './components/CycleCalendar';
+
 import WellBeing, {
   type WellbeingEntry,
 } from './components/WellBeing';
+
 import BottomNavigation from './components/BottomNavigation';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import {
+  requestNotificationPermission,
+  scheduleWellbeingReminder,
+  schedulePeriodReminder,
+  cancelWellbeingReminder,
+  cancelPeriodReminder,
+} from './services/notificationService';
 
 // Sovelluksen pääkomponentti
 export default function App() {
@@ -43,6 +55,10 @@ export default function App() {
   const [cycleLength, setCycleLength] = useState('28');
   const [activeTab, setActiveTab] = useState('calendar');
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Muistutusten asetukset
+  const [wellbeingReminder, setWellbeingReminder] = useState(false);
+  const [periodReminder, setPeriodReminder] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState('');
 
@@ -59,7 +75,6 @@ export default function App() {
       entriesRef,
       (snapshot) => {
         const data = snapshot.val();
-
         setWellbeingEntries(data ?? {});
       },
       (error) => {
@@ -73,50 +88,70 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Haetaan tallennetut kierron tiedot sovelluksen käynnistyessä
-useEffect(() => {
-  async function loadCycleSettings() {
-    try {
-      const savedSettings = await AsyncStorage.getItem('cycleSettings');
+  // Haetaan tallennetut kierron ja muistutusten asetukset
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const savedSettings = await AsyncStorage.getItem('cycleSettings');
 
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings);
 
-        setPeriodStartDate(settings.periodStartDate ?? '');
-        setCycleLength(settings.cycleLength ?? '28');
+          setPeriodStartDate(settings.periodStartDate ?? '');
+          setCycleLength(settings.cycleLength ?? '28');
+        }
+
+        const savedReminders = await AsyncStorage.getItem('reminderSettings');
+
+        if (savedReminders) {
+          const reminders = JSON.parse(savedReminders);
+
+          setWellbeingReminder(
+            reminders.wellbeingReminder ?? false
+          );
+
+          setPeriodReminder(
+            reminders.periodReminder ?? false
+          );
+        }
+      } catch (error) {
+        console.error(
+          'Asetusten hakeminen epäonnistui:',
+          error
+        );
+      } finally {
+        setSettingsLoaded(true);
       }
-    } catch (error) {
-      console.error('Kierron tietojen hakeminen epäonnistui:', error);
-    } finally {
-      setSettingsLoaded(true);
     }
-  }
 
-  loadCycleSettings();
-}, []);
+    loadSettings();
+  }, []);
 
-// Tallennetaan kierron tiedot aina niiden muuttuessa
-useEffect(() => {
-  if (!settingsLoaded) {
-    return;
-  }
-
-  async function saveCycleSettings() {
-    try {
-      await AsyncStorage.setItem(
-        'cycleSettings',
-        JSON.stringify({
-          periodStartDate,
-          cycleLength,
-        })
-      );
-    } catch (error) {
-      console.error('Kierron tietojen tallennus epäonnistui:', error);
+  // Tallennetaan kierron tiedot aina niiden muuttuessa
+  useEffect(() => {
+    if (!settingsLoaded) {
+      return;
     }
-  }
 
-  saveCycleSettings();
-}, [periodStartDate, cycleLength, settingsLoaded]);
+    async function saveCycleSettings() {
+      try {
+        await AsyncStorage.setItem(
+          'cycleSettings',
+          JSON.stringify({
+            periodStartDate,
+            cycleLength,
+          })
+        );
+      } catch (error) {
+        console.error(
+          'Kierron tietojen tallennus epäonnistui:',
+          error
+        );
+      }
+    }
+
+    saveCycleSettings();
+  }, [periodStartDate, cycleLength, settingsLoaded]);
 
   // Tallennetaan hyvinvointimerkintä Firebaseen
   function saveWellbeingEntry(entry: WellbeingEntry) {
@@ -131,7 +166,6 @@ useEffect(() => {
 
     set(entryRef, entry)
       .then(() => {
-        // Päivitetään myös sovelluksen paikallinen tila
         setWellbeingEntries((prev) => ({
           ...prev,
           [selectedDate]: entry,
@@ -151,9 +185,11 @@ useEffect(() => {
     Number(cycleLength) >= 21 &&
     Number(cycleLength) <= 38;
 
+  // Kalenterin merkinnät
   const markedDates = validCycleLength
     ? createMarkedDates(periodStartDate, Number(cycleLength))
     : {};
+
   // Lasketaan tämänhetkinen kiertopäivä ja kierron vaihe
   const currentCycleDay = validCycleLength
     ? getCycleDay(periodStartDate, Number(cycleLength))
@@ -163,6 +199,133 @@ useEffect(() => {
     currentCycleDay !== null
       ? getCyclePhase(currentCycleDay, Number(cycleLength))
       : null;
+
+  // Hyvinvointipäiväkirjan muistutuksen kytkeminen
+  async function handleWellbeingReminder(enabled: boolean) {
+    if (enabled) {
+      const permissionGranted = await requestNotificationPermission();
+
+      if (!permissionGranted) {
+        Alert.alert(
+          'Ilmoituslupa tarvitaan',
+          'Salli ilmoitukset puhelimen asetuksista, jotta voit ottaa muistutuksen käyttöön.'
+        );
+        return;
+      }
+    }
+
+    setWellbeingReminder(enabled);
+
+    try {
+      await AsyncStorage.setItem(
+        'reminderSettings',
+        JSON.stringify({
+          wellbeingReminder: enabled,
+          periodReminder,
+        })
+      );
+    } catch (error) {
+      console.error(
+        'Muistutusasetusten tallennus epäonnistui:',
+        error
+      );
+    }
+  }
+
+  // Kuukautismuistutuksen kytkeminen
+  async function handlePeriodReminder(enabled: boolean) {
+    if (enabled) {
+      if (!periodStartDate || !validCycleLength) {
+        Alert.alert(
+          'Kierron tiedot puuttuvat',
+          'Aseta ensin kuukautisten alkamispäivä ja kelvollinen kierron pituus kalenterissa.'
+        );
+        return;
+      }
+
+      const permissionGranted = await requestNotificationPermission();
+
+      if (!permissionGranted) {
+        Alert.alert(
+          'Ilmoituslupa tarvitaan',
+          'Salli ilmoitukset puhelimen asetuksista, jotta voit ottaa muistutuksen käyttöön.'
+        );
+        return;
+      }
+    }
+
+    setPeriodReminder(enabled);
+
+    try {
+      await AsyncStorage.setItem(
+        'reminderSettings',
+        JSON.stringify({
+          wellbeingReminder,
+          periodReminder: enabled,
+        })
+      );
+    } catch (error) {
+      console.error(
+        'Muistutusasetusten tallennus epäonnistui:',
+        error
+      );
+    }
+  }
+
+  // Ajastetaan tai perutaan päivittäinen hyvinvointimuistutus
+  useEffect(() => {
+    if (!settingsLoaded) {
+      return;
+    }
+
+    if (wellbeingReminder) {
+      scheduleWellbeingReminder().catch((error: unknown) => {
+        console.error(
+          'Hyvinvointimuistutuksen ajastaminen epäonnistui:',
+          error
+        );
+      });
+    } else {
+      cancelWellbeingReminder().catch((error: unknown) => {
+        console.error(
+          'Hyvinvointimuistutuksen peruuttaminen epäonnistui:',
+          error
+        );
+      });
+    }
+  }, [wellbeingReminder, settingsLoaded]);
+
+  // Ajastetaan tai perutaan kuukautismuistutus
+  useEffect(() => {
+    if (!settingsLoaded) {
+      return;
+    }
+
+    if (periodReminder && periodStartDate && validCycleLength) {
+      schedulePeriodReminder(
+        periodStartDate,
+        Number(cycleLength)
+      ).catch((error: unknown) => {
+        console.error(
+          'Kuukautismuistutuksen ajastaminen epäonnistui:',
+          error
+        );
+      });
+    } else {
+      cancelPeriodReminder().catch((error: unknown) => {
+        console.error(
+          'Kuukautismuistutuksen peruuttaminen epäonnistui:',
+          error
+        );
+      });
+    }
+  }, [
+    periodReminder,
+    periodStartDate,
+    cycleLength,
+    validCycleLength,
+    settingsLoaded,
+  ]);
 
   // Etusivun kalenterinäkymä
   function renderCalendar() {
@@ -200,6 +363,7 @@ useEffect(() => {
           >
             <View style={styles.header}>
               <Text style={styles.title}>{pageTitle}</Text>
+
               <Text style={styles.subtitle}>
                 Kuukautiskierron kalenteri
               </Text>
@@ -214,6 +378,10 @@ useEffect(() => {
                 selectedDate={selectedDate}
                 savedEntry={wellbeingEntries[selectedDate]}
                 onSave={saveWellbeingEntry}
+                wellbeingReminder={wellbeingReminder}
+                periodReminder={periodReminder}
+                onWellbeingReminderChange={handleWellbeingReminder}
+                onPeriodReminderChange={handlePeriodReminder}
               />
             )}
           </ScrollView>
