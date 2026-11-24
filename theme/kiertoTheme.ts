@@ -1,6 +1,6 @@
 import { MD3LightTheme } from 'react-native-paper';
 
-// Kiertomobiilin väriteema
+// Väriteema
 const kiertoTheme = {
   ...MD3LightTheme,
   colors: {

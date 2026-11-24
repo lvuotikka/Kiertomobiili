@@ -15,12 +15,16 @@ import {
 } from 'react-native-paper';
 
 import {
-  ref,
-  onValue,
-  set,
-} from 'firebase/database';
+  subscribeToWellbeingEntries,
+  saveWellbeingEntry as saveEntryToFirebase,
+} from './services/wellbeingService';
 
-import { database } from './firebaseConfig';
+import {
+  loadCycleSettings,
+  saveCycleSettings,
+  loadReminderSettings,
+  saveReminderSettings,
+} from './services/settingsService';
 
 import {
   createMarkedDates,
@@ -33,13 +37,10 @@ import kiertoTheme from './theme/kiertoTheme';
 import CyclePhases from './components/CyclePhases';
 import CycleCalendar from './components/CycleCalendar';
 
-import WellBeing, {
-  type WellbeingEntry,
-} from './components/WellBeing';
+import WellBeing from './components/WellBeing';
+import type { WellbeingEntry } from './types/wellbeing';
 
 import BottomNavigation from './components/BottomNavigation';
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   requestNotificationPermission,
@@ -69,17 +70,13 @@ export default function App() {
 
   // Haetaan hyvinvointimerkinnät Firebase-tietokannasta
   useEffect(() => {
-    const entriesRef = ref(database, 'wellbeingEntries');
-
-    const unsubscribe = onValue(
-      entriesRef,
-      (snapshot) => {
-        const data = snapshot.val();
-        setWellbeingEntries(data ?? {});
+    const unsubscribe = subscribeToWellbeingEntries(
+      (entries) => {
+        setWellbeingEntries(entries);
       },
       (error) => {
         console.error(
-          'Merkintöjen hakeminen epäonnistui:',
+          'Hyvinvointimerkintöjen hakeminen epäonnistui:',
           error
         );
       }
@@ -92,20 +89,16 @@ export default function App() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const savedSettings = await AsyncStorage.getItem('cycleSettings');
+        const settings = await loadCycleSettings();
 
-        if (savedSettings) {
-          const settings = JSON.parse(savedSettings);
-
+        if (settings) {
           setPeriodStartDate(settings.periodStartDate ?? '');
           setCycleLength(settings.cycleLength ?? '28');
         }
 
-        const savedReminders = await AsyncStorage.getItem('reminderSettings');
+        const reminders = await loadReminderSettings();
 
-        if (savedReminders) {
-          const reminders = JSON.parse(savedReminders);
-
+        if (reminders) {
           setWellbeingReminder(
             reminders.wellbeingReminder ?? false
           );
@@ -133,24 +126,15 @@ export default function App() {
       return;
     }
 
-    async function saveCycleSettings() {
-      try {
-        await AsyncStorage.setItem(
-          'cycleSettings',
-          JSON.stringify({
-            periodStartDate,
-            cycleLength,
-          })
-        );
-      } catch (error) {
-        console.error(
-          'Kierron tietojen tallennus epäonnistui:',
-          error
-        );
-      }
-    }
-
-    saveCycleSettings();
+    saveCycleSettings({
+      periodStartDate,
+      cycleLength,
+    }).catch((error) => {
+      console.error(
+        'Kierron tietojen tallennus epäonnistui:',
+        error
+      );
+    });
   }, [periodStartDate, cycleLength, settingsLoaded]);
 
   // Tallennetaan hyvinvointimerkintä Firebaseen
@@ -159,12 +143,7 @@ export default function App() {
       return;
     }
 
-    const entryRef = ref(
-      database,
-      `wellbeingEntries/${selectedDate}`
-    );
-
-    set(entryRef, entry)
+    saveEntryToFirebase(selectedDate, entry)
       .then(() => {
         setWellbeingEntries((prev) => ({
           ...prev,
@@ -217,13 +196,10 @@ export default function App() {
     setWellbeingReminder(enabled);
 
     try {
-      await AsyncStorage.setItem(
-        'reminderSettings',
-        JSON.stringify({
-          wellbeingReminder: enabled,
-          periodReminder,
-        })
-      );
+      await saveReminderSettings({
+        wellbeingReminder: enabled,
+        periodReminder,
+      });
     } catch (error) {
       console.error(
         'Muistutusasetusten tallennus epäonnistui:',
@@ -257,13 +233,10 @@ export default function App() {
     setPeriodReminder(enabled);
 
     try {
-      await AsyncStorage.setItem(
-        'reminderSettings',
-        JSON.stringify({
-          wellbeingReminder,
-          periodReminder: enabled,
-        })
-      );
+      await saveReminderSettings({
+        wellbeingReminder,
+        periodReminder: enabled,
+      });
     } catch (error) {
       console.error(
         'Muistutusasetusten tallennus epäonnistui:',
@@ -377,6 +350,7 @@ export default function App() {
               <WellBeing
                 selectedDate={selectedDate}
                 savedEntry={wellbeingEntries[selectedDate]}
+                entries={wellbeingEntries}
                 onSave={saveWellbeingEntry}
                 wellbeingReminder={wellbeingReminder}
                 periodReminder={periodReminder}
@@ -426,62 +400,5 @@ const styles = StyleSheet.create({
     color: '#C5C5C0',
     marginTop: 6,
     textAlign: 'center',
-  },
-  introCard: {
-    backgroundColor: '#F0E5CB',
-    padding: 20,
-    borderRadius: 20,
-    gap: 8,
-  },
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#51483F',
-  },
-  bodyText: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: '#625E56',
-  },
-  phaseTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#51483F',
-  },
-  wellbeingCard: {
-    backgroundColor: '#F0E5CB',
-    padding: 20,
-    borderRadius: 18,
-    gap: 10,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#F0E5CB',
-    borderTopWidth: 1,
-    borderTopColor: '#C9BFAE',
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  navButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 3,
-    borderRadius: 12,
-    gap: 4,
-  },
-  activeNavButton: {
-    backgroundColor: '#E5D8B8',
-  },
-  navLabel: {
-    fontSize: 11,
-    color: '#625E56',
-    textAlign: 'center',
-  },
-  activeNavLabel: {
-    color: '#51483F',
-    fontWeight: 'bold',
   },
 });

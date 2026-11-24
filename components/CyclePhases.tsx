@@ -24,6 +24,7 @@ function PhaseRecipes({
   searchTerms: string[];
   onSelectRecipe: (recipeId: string) => void;
 }) {
+  // Tallennetaan reseptit raaka-aineittain omiin ryhmiinsä ja hallitaan reseptien lataustilaa
   const [recipesByIngredient, setRecipesByIngredient] =
     useState<Record<string, Recipe[]>>({});
   const [loading, setLoading] = useState(true);
@@ -172,7 +173,7 @@ export default function CyclePhases() {
           </View>
 
           <Text style={styles.bodyText}>
-            {phase.description}
+            {phase.description.replace(/^[ \t]+/gm, '')}
           </Text>
 
           <View style={styles.recipeSection}>
@@ -190,7 +191,7 @@ export default function CyclePhases() {
     </>
   );
 }
-
+// Tyylit
 const styles = StyleSheet.create({
   introCard: {
     backgroundColor: '#F0E5CB',

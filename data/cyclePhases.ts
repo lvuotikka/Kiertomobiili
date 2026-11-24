@@ -5,7 +5,7 @@ export const cyclePhases = [
     name: 'Kuukautiset',
     color: '#702D3C',
     days: 'Kiertopäivät 1–5, yksilöllisesti vaihdellen',
-    description: `Kuukautiset eli vuotovaihe aloittavat uuden kuukautiskierron. Jos edellisessä kierrossa munasolu ei ole hedelmöittynyt, keltarauhasen toiminta hiipuu ja estrogeenin sekä progesteronin pitoisuudet laskevat. Tämän seurauksena kohdun limakalvo alkaa irrota ja poistuu emättimen kautta kuukautisvuotona.
+    description: `Kuukautiset eli vuotovaihe aloittaa uuden kuukautiskierron. Jos edellisessä kierrossa munasolu ei ole hedelmöittynyt, keltarauhasen toiminta hiipuu ja estrogeenin sekä progesteronin pitoisuudet laskevat. Tämän seurauksena kohdun limakalvo alkaa irrota ja poistuu emättimen kautta kuukautisvuotona.
 
       Samalla aivolisäke alkaa erittää follikkelia stimuloivaa hormonia (FSH), joka käynnistää uusien munarakkuloiden kehityksen munasarjoissa. Yksi munarakkuloista alkaa yleensä kehittyä muita hallitsevammaksi.
 
@@ -50,7 +50,7 @@ export const cyclePhases = [
 
       Hormonitasojen muutokset voivat aiheuttaa esimerkiksi rintojen arkuutta, turvotusta, väsymystä, ruokahalun muutoksia ja mielialan vaihtelua. Näitä oireita kutsutaan usein kuukautisia edeltäviksi oireiksi eli PMS-oireiksi. Kaikki eivät kuitenkaan koe niitä.
 
-      Tässä vaiheessa kannattaa kuunnella omaa kehoa ja huolehtia riittävästä unesta, säännöllisestä ruokailusta ja palautumisesta. Esimerkiksi bataatti, kaura ja banaani sisältävät kuitua ja muita hyödyllisiä ravintoaineita.`,
-    recipeSearchTerms: ['sweet potato', 'oats', 'banana'],
+      Tässä vaiheessa kannattaa kuunnella omaa kehoa ja huolehtia riittävästä unesta, säännöllisestä ruokailusta ja palautumisesta. Esimerkiksi peruna, kaura ja banaani sisältävät kuitua ja muita hyödyllisiä ravintoaineita.`,
+    recipeSearchTerms: ['potatoes', 'oats', 'banana'],
   },
 ];

@@ -24,9 +24,10 @@ LocaleConfig.locales.fi = {
   dayNamesShort: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La'],
   today: 'Tänään',
 };
-
+// Asetetaan suomi kalenterin oletuskieleksi
 LocaleConfig.defaultLocale = 'fi';
 
+// Määritellään kalenterikomponentille välitettävät tiedot ja toiminnot
 type CycleCalendarProps = {
   periodStartDate: string;
   selectedDate: string;
@@ -42,7 +43,7 @@ type CycleCalendarProps = {
     color: string;
   } | null;
 };
-
+// Näyttää käyttäjän kierron tilanteen, kalenterin ja kierron asetukset
 export default function CycleCalendar({
   periodStartDate,
   selectedDate,
@@ -56,9 +57,9 @@ export default function CycleCalendar({
   currentPhase,
 }: CycleCalendarProps) {
 
-  // Säilytetään kierron värit ja lisätään valitun päivän reunus
+// Kopioidaan kalenterin valmiit päivämäärämerkinnät, jotta valitun päivän korostus voidaan lisätä muuttamatta alkuperäistä objektia
   const calendarMarkedDates = { ...markedDates };
-
+// Jos käyttäjä on valinnut päivän, lisätään sen ympärille reunus
   if (selectedDate) {
     const existing = calendarMarkedDates[selectedDate] ?? {
       customStyles: {
@@ -79,7 +80,7 @@ export default function CycleCalendar({
       },
     };
   }
-
+//Näytetään käyttäjälle tämänhetkinen kiertopäivä ja kierron vaihe. Jos kierron tietoja ei ole vielä asetettu, näytetään tervetuloteksti ja ohje kuukautisten alkamispäivän asettamiseen
   return (
     <>
       <View style={styles.welcomeCard}>
@@ -101,7 +102,8 @@ export default function CycleCalendar({
           {currentPhase.name}
         </Text>
       </View>
-
+      
+      {/* Näytetään kierron vaiheeseen liittyvä lyhyt kuvaus. */}
       <Text style={styles.bodyText}>
         {currentPhase.name === 'Kuukautiset'
           ? 'Kuukautisten aikana voit kiinnittää huomiota lepoon ja omaan jaksamiseesi.'
@@ -122,7 +124,8 @@ export default function CycleCalendar({
     </>
   )}
 </View>
-
+      {/* Kalenterikortti sisältää kierron pituuden asetuksen,
+          päivämääräkalenterin ja valitun päivän tiedot. */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Kiertokalenteri</Text>
 
@@ -146,13 +149,14 @@ export default function CycleCalendar({
           activeOutlineColor="#78816B"
           textColor="#292A27"
         />
-
+        {/* Näytetään virheilmoitus, jos kierron pituus ei ole sallituissa rajoissa. */}
         {!validCycleLength && (
           <Text style={styles.errorText}>
             Anna kokonaisluku väliltä 21-38.
           </Text>
         )}
-
+        {/* Kalenteri näyttää kierron päivät värikoodeilla.
+            Päivän painaminen välittää valitun päivämäärän pääkomponentille. */}
         <Calendar
           firstDay={1}
           onDayPress={(day: DateData) => {
@@ -173,7 +177,9 @@ export default function CycleCalendar({
             textMonthFontWeight: 'bold',
           }}
         />
-
+        {/* Näytetään käyttäjän valitsema päivämäärä.
+            Jos päivä ei ole jo kuukautisten alkamispäivä,
+            käyttäjä voi asettaa sen uudeksi alkamispäiväksi. */}
         {selectedDate !== '' && (
           <View style={styles.selectedDateBox}>
             <Text style={styles.selectedDateLabel}>
@@ -195,7 +201,8 @@ export default function CycleCalendar({
             )}
           </View>
         )}
-
+        {/* Näytetään erikseen käyttäjän asettama kuukautisten alkamispäivä.
+            Tätä päivää käytetään kierron laskennan lähtökohtana. */}
         {periodStartDate !== '' && (
           <View style={styles.selectedDateBox}>
             <Text style={styles.selectedDateLabel}>
@@ -212,6 +219,8 @@ export default function CycleCalendar({
           </View>
         )}
 
+        {/* Luodaan kierron vaiheiden väriselite data-tiedoston
+            cyclePhases-taulukon tietojen perusteella. */}
         <Text style={styles.legendTitle}>Kierron vaiheet</Text>
 
         {cyclePhases.map((phase) => (
@@ -235,6 +244,7 @@ export default function CycleCalendar({
   );
 }
 
+// Tyylit
 const styles = StyleSheet.create({
   welcomeCard: {
     backgroundColor: '#F0E5CB',

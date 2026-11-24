@@ -13,17 +13,18 @@ import {
   getRecipeDetails,
   type RecipeDetails as RecipeDetailsType,
 } from '../services/recipeService';
-
+// recipeId yksilöi haettavan reseptin ja onBack mahdollistaa
 type Props = {
   recipeId: string;
   onBack: () => void;
 };
-
+// Hakee valitun reseptin tiedot ja näyttää sen kuvan, ainesosat, määrät ja valmistusohjeet englanniksi
 export default function RecipeDetails({
   recipeId,
   onBack,
 }: Props) {
   const [recipe, setRecipe] = useState<RecipeDetailsType | null>(null);
+  // Hallitaan reseptin lataustilaa ja mahdollisia virheilmoituksia.
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -176,7 +177,7 @@ export default function RecipeDetails({
     </ScrollView>
   );
 }
-
+// Tyylit
 const styles = StyleSheet.create({
   container: {
     flex: 1,

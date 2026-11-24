@@ -5,7 +5,7 @@ export type Recipe = {
   strMealThumb: string;
 };
 
-// Reseptit, joita emme halua näyttää ehdotuksissa
+// Reseptit, joita ei haluta näyttää ehdotuksissa
 const unwantedWords = [
   'cake',
   'pudding',
@@ -22,7 +22,7 @@ const unwantedWords = [
   'sweet',
 ];
 
-// Tarkistetaan, onko reseptin nimi sopiva
+// Tarkistetaan onko reseptin nimi sopiva
 function isSuitableRecipeName(name: string): boolean {
   const lowerName = name.toLowerCase();
 
@@ -52,7 +52,7 @@ export async function getRecipesByIngredient(
 
   const meals: Recipe[] = data.meals ?? [];
 
-  // Karsitaan ensin selvästi sopimattomat nimet
+  // Karsitaan ensin sopimattomat nimet
   const nameFiltered = meals.filter((recipe) =>
     isSuitableRecipeName(recipe.strMeal)
   );

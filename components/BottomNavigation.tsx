@@ -2,11 +2,14 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
+//activeTab kertoo, mikä välilehti on parhaillaan aktiivisena.
+// setActiveTab vaihtaa aktiivisen välilehden käyttäjän valinnan mukaan.
 type BottomNavigationProps = {
   activeTab: string;
   setActiveTab: (tab: string) => void;
 };
 
+// Alapalkin navigaatiokomponentti
 export default function BottomNavigation({
   activeTab,
   setActiveTab,
@@ -82,6 +85,7 @@ export default function BottomNavigation({
   );
 }
 
+// Tyylit
 const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',

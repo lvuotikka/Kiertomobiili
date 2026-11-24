@@ -129,7 +129,7 @@ export async function schedulePeriodReminder(
   });
 }
 
-// Perutaan kaikki Kierto-sovelluksen muistutukset
+// Perutaan kaikki muistutukset
 export async function cancelAllKiertoReminders() {
   await cancelReminder('wellbeing');
   await cancelReminder('period');
